@@ -318,14 +318,15 @@ func (queryReceiver *logsQueryReceiver) storeTrackingValue(ctx context.Context, 
 func rowToLog(row sqlquery.StringMap, config sqlquery.LogsCfg, logRecord plog.LogRecord) error {
 	logRecord.Body().SetStr(row[config.BodyColumn])
 	attrs := logRecord.Attributes()
+	var errs []error
 	for _, columnName := range config.AttributeColumns {
 		if attrVal, found := row[columnName]; found {
 			attrs.PutStr(columnName, attrVal)
 		} else {
-			return fmt.Errorf("rowToLog: attribute_column not found: '%s'", columnName)
+			errs = append(errs, fmt.Errorf("rowToLog: attribute_column not found: '%s'", columnName))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func (queryReceiver *logsQueryReceiver) shutdown(_ context.Context) error {
